@@ -1,0 +1,267 @@
+<div class="container-fluid" data-ng-controller="clientController">
+    <div class="row">
+        <div class="col-md-6 col-sm-6 col-xs-6">
+            <h1 style="margin: 0;">
+                <strong>{{activeItem.name}}</strong>&nbsp;<i class="fa fa-spinner fa-spin" data-fade-toggle="promiseMonitor.isPending() && !noDefaultDatesFlag"></i>
+            </h1>
+        </div>
+    </div>
+    <div class="form-horizontal">
+        <div class="row">
+            <div class="col-md-9 bold text-left">
+                <h4 data-ng-show="!showAggregates && !showNodeAggregates">
+                    <strong>{{activeItem.hierarchyNode}}</strong>
+                    <span class="thin">{{activeItem.product}}</span>&nbsp;
+                    <strong>{{activeItem.deliveryType}}</strong>
+                </h4>
+            </div>
+            <div class="col-md-3">
+                <h4 class="text-primary pull-right clickable" data-ng-click="openDatePicker()">
+                    <i class="fa fa-calendar"></i> 
+                    <span data-ng-show="activeItem.dates.periodStartDate">{{activeItem.dates.periodStartDate.format("L")}} -</span>{{activeItem.dates.lastDeliveryDate.format("L")}}
+                </h4>
+            </div>
+        </div>
+        <div class="panel" data-ng-init="showFilter = hasDefaultFilter">
+            <div class="panel-heading clickable" data-ng-click="showFilter=!showFilter" data-ng-init="showFilter">
+                <span data-ng-if="!showFilter">+</span>
+                <span data-ng-if="showFilter">-</span> Filters
+            </div>
+            <div class="panel-body" data-slide-toggle="showFilter">
+                <div class="col-md-12">
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <label class="control-label">Products</label>
+                            <select data-multi-select="activeItem.filter.productIds" multiple data-ng-model="activeItem.filter.productIds" data-ng-change="filtersUpdated()">
+                                <option value="{{product.id}}" data-ng-repeat="product in products | orderBy:'id'" data-multi-select-repeat-render-finish="">{{product.name}}</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="control-label">HierarchyNode</label>
+                            <select class="form-control" data-ng-model="activeItem.filter.hierarchyNodeId" data-ng-options="node.id as node.name for node in $root.user.hierarchy.hierarchyNode.nodes" data-ng-change="updateHierarchyNode()"></select>
+                            <small><a class="clickable" data-ng-click="openDeliveryHierarchyView()">Click here to view the hierarchy</a>
+                            </small>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <button class="btn btn-primary pull-right" data-ng-disabled="promiseMonitor.isPending()" data-ng-click="filtersUpdated()">
+                                Apply Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row" data-ng-show="promiseMonitor.isPending()">
+            <div class="col-md-11 text-center">
+                <h5><i class="fa fa-spinner fa-spin"></i>&nbsp;Loading...</h5>
+            </div>
+        </div>
+        <div class="row" data-ng-show="!promiseMonitor.isPending() && noDefaultDatesFlag">
+            <div class="col-md-12 text-center">
+                <div class="alert alert-danger center">
+                    Sorry, but there are no sales for the for the
+                    <strong>product(s)</strong>&nbsp;selected.
+                </div>
+            </div>
+        </div>
+        <div data-ng-show="!promiseMonitor.isPending() && !noDefaultDatesFlag">
+            <div class="row" data-slide-toggle="showNodeAggregates">
+                <div class="col-md-12">
+                    <table bindonce="activeItem.nodeSummary" class="table table-condensed table-bordered table-striped table-hover group-table">
+                        <thead data-show-hide-table-header="activeItem.nodeSummaryHeadings" data-report-table="activeItem.filter.summaryTable" data-reinit="summaryReinit"></thead>
+                        <tr class="bold">
+                            <td colspan="{{distanceFromLeaf - 1}}">
+                                <span class="pull-left btn-group"><button class="btn btn-default pull-left" data-ng-click="aggregatesExpandAll(true)"><i class="fa fa-plus-square-o"></i></button><button class="btn btn-default pull-left" data-ng-click="aggregatesExpandAll(false)"><i class="fa fa-minus-square-o"></i></button></span><span class="pull-left" style="padding: 7px;">Grand Totals</span>
+                            </td>
+                            <td class="text-right">
+                                <span>{{activeItem.nodeSummary.aggregates.units | number:2}}</span>
+                            </td>
+                            <td class="text-right">
+                                <span>{{activeItem.nodeSummary.aggregates.percentage | number:1}}</span>
+                            </td>
+                            <td class="text-right">
+                                <span>{{activeItem.nodeSummary.aggregates.adjPercent | number:1}}</span>
+                            </td>
+                            <td class="text-right">
+                                <span>{{activeItem.nodeSummary.aggregates.variance | number:1}}</span>
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr ng-repeat-start="(key, value) in activeItem.nodeSummary.nodes track by key" class="bold aggregate-row clickable" data-ng-init="activeItem.aggregatesCollapse[key].isExpanded = activeItem.aggregatesCollapse[key].isExpanded" data-ng-click="aggRowAction(key, distanceFromLeaf, !activeItem.aggregatesCollapse[key].isExpanded)" data-repeat-finish-callback="summaryReinitComplete(key)">
+                            <td class="clickable" colspan="{{distanceFromLeaf - 1}}">
+                                <span><i class="fa" data-ng-class="{'fa-caret-right' : !activeItem.aggregatesCollapse[key].isExpanded, 'fa-caret-down' : activeItem.aggregatesCollapse[key].isExpanded}" bo-if="activeItem.nodeSummary.nodes[key].nodes && (distanceFromLeaf - 1) > 2"></i><i class="fa fa-caret-right" bo-if="activeItem.nodeSummary.nodes[key].nodes && (distanceFromLeaf - 1) <= 1"></i>&nbsp;<span bo-text="activeItem.nodeSummary.nodes[key].aggregates.hierarchyNodeName"></span></span>
+                            </td>
+                            <td class="text-right">
+                                <span bo-text="activeItem.nodeSummary.nodes[key].aggregates.units | number:2"></span>
+                            </td>
+                            <td class="text-right">
+                                <span bo-text="activeItem.nodeSummary.nodes[key].aggregates.percentage | number:1"></span>
+                            </td>
+                            <td class="text-right">
+                                <span bo-text="activeItem.nodeSummary.nodes[key].aggregates.adjPercent | number:1"></span>
+                            </td>
+                            <td class="text-right">
+                                <span bo-text="activeItem.nodeSummary.nodes[key].aggregates.variance | number:1"></span>
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr data-grouping-directive="activeItem.nodeSummary.nodes[key]" data-parent-key="key" ng-hide="true"></tr>
+                        <tr ng-repeat-end ng-hide="true"></tr>
+                    </table>
+                </div>
+            </div>
+            <div data-slide-toggle="showAggregates">
+                <div class="row">
+                    <div class="col-md-12" data-ng-if="activeItem.detailNodeId">
+                        <div class="margin-bottom">
+                            <div class="col-md-6 bold text-left">
+                                <h6><span class=" clickable text-primary" data-ng-click="action()"><i class="fa fa-arrow-circle-o-left"></i>&nbsp;Back to summary</span><span data-ng-if="activeItem.detailNodeName">| &nbsp; <strong>{{activeItem.detailNodeName}}</strong></span></h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <table bindonce="activeItem.aggregates" class="table table-condensed table-bordered table-striped table-hover group-table">
+                            <thead data-show-hide-table-header="aggregateHeadings" data-report-table="activeItem.filter.table" data-reinit="reinit"></thead>
+                            <tr class="bold">
+                                <td colspan="3">
+                                    <span class="btn-group pull-left">
+                                    <button class="btn btn-default pull-left" data-ng-click="expandAll(true)"><i class="fa fa-plus-square-o"></i>
+                                    </button>
+                                    <button class="btn btn-default pull-left" data-ng-click="expandAll(false)"><i class="fa fa-minus-square-o"></i>
+                                    </button></span>
+                                    <span class="pull-left" style="padding: 7px;">Grand Totals</span>
+                                </td>
+                                <td class="text-right">
+                                    <span>{{activeItem.aggregates.aggregates.units | number:2}}</span>
+                                </td>
+                                <td class="text-right">
+                                    <span>{{activeItem.aggregates.aggregates.percentage | number:1}}</span>
+                                </td>
+                                <td class="text-right">
+                                    <span>{{activeItem.aggregates.aggregates.adjPercent | number:1}}</span>
+                                </td>
+                                <td class="text-right">
+                                    <span>{{activeItem.aggregates.aggregates.variance | number:1}}</span>
+                                </td>
+                                <td></td>
+                            </tr>
+                            <tbody>
+                                <tr ng-repeat-start="(hierarchyNodeName, nodeGroup) in activeItem.aggregates.hierarchyNodes track by hierarchyNodeName " class="bold aggregate-row" data-ng-init="activeItem.groupCollapse[hierarchyNodeName].isExpanded = activeItem.groupCollapse[hierarchyNodeName].isExpanded" data-ng-click="activeItem.groupCollapse[hierarchyNodeName].isExpanded = !activeItem.groupCollapse[hierarchyNodeName].isExpanded" data-repeat-finish-callback="dcComplete()">
+                                    <td class="clickable" colspan="3">
+                                        <span><i class="fa" data-ng-class="{'fa-caret-right' : !activeItem.groupCollapse[hierarchyNodeName].isExpanded, 'fa-caret-down' : activeItem.groupCollapse[hierarchyNodeName].isExpanded}"></i>&nbsp;<span bo-text="hierarchyNodeName"></span></span>
+                                    </td>
+                                    <td class="text-right">
+                                        <span bo-text="activeItem.aggregates.hierarchyNodes[hierarchyNodeName].aggregates.units | number:2"></span>
+                                    </td>
+                                    <td class="text-right">
+                                        <span bo-text="activeItem.aggregates.hierarchyNodes[hierarchyNodeName].aggregates.percentage | number:1"></span>
+                                    </td>
+                                    <td class="text-right">
+                                        <span bo-text="activeItem.aggregates.hierarchyNodes[hierarchyNodeName].aggregates.adjPercent | number:1"></span>
+                                    </td>
+                                    <td class="text-right">
+                                        <span bo-text="activeItem.aggregates.hierarchyNodes[hierarchyNodeName].aggregates.variance | number:1"></span>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr ng-repeat-start="(productName, productGroup) in nodeGroup.products track by productName" collapse="!activeItem.groupCollapse[hierarchyNodeName].isExpanded" class="bold aggregate-row" data-ng-init="activeItem.groupCollapse[hierarchyNodeName+'_'+productName].isExpanded = activeItem.groupCollapse[hierarchyNodeName+'_'+productName].isExpanded" data-ng-click="activeItem.groupCollapse[hierarchyNodeName+'_'+productName].isExpanded = !activeItem.groupCollapse[hierarchyNodeName+'_'+productName].isExpanded" data-repeat-finish-callback="prodComplete()">
+                                    <td></td>
+                                    <td class="clickable" colspan="2">
+                                        <span><i class="fa" data-ng-class="{'fa-caret-right' : !activeItem.groupCollapse[hierarchyNodeName+'_'+productName].isExpanded, 'fa-caret-down' : activeItem.groupCollapse[hierarchyNodeName+'_'+productName].isExpanded}"></i>&nbsp;<span bo-text="productName"></span></span>
+                                    </td>
+                                    <td class="text-right">
+                                        <span bo-text="activeItem.aggregates.hierarchyNodes[hierarchyNodeName].products[productName].aggregates.units | number:2"></span>
+                                    </td>
+                                    <td class="text-right">
+                                        <span bo-text="activeItem.aggregates.hierarchyNodes[hierarchyNodeName].products[productName].aggregates.percentage | number:1"></span>
+                                    </td>
+                                    <td class="text-right">
+                                        <span bo-text="activeItem.aggregates.hierarchyNodes[hierarchyNodeName].products[productName].aggregates.adjPercent | number:1"></span>
+                                    </td>
+                                    <td class="text-right">
+                                        <span bo-text="activeItem.aggregates.hierarchyNodes[hierarchyNodeName].products[productName].aggregates.variance | number:1"></span>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr ng-repeat-start="(deliveryTypeName, deliveryTypeGroup) in productGroup.deliveryTypes track by deliveryTypeName" collapse="!activeItem.groupCollapse[hierarchyNodeName].isExpanded || !activeItem.groupCollapse[hierarchyNodeName+'_'+productName].isExpanded" class="bold aggregate-row clickable" data-ng-click="getDetailRows(1, hierarchyNodeName, productName, deliveryTypeName)" data-repeat-finish-callback="dtComplete()">
+                                    <td></td>
+                                    <td></td>
+                                    <td>
+                                        <span bo-text="deliveryTypeName"></span>
+                                    </td>
+                                    <td class="text-right">
+                                        <span bo-text="activeItem.aggregates.hierarchyNodes[hierarchyNodeName].products[productName].deliveryTypes[deliveryTypeName].aggregates.units | number:2"></span>
+                                    </td>
+                                    <td class="text-right">
+                                        <span bo-text="activeItem.aggregates.hierarchyNodes[hierarchyNodeName].products[productName].deliveryTypes[deliveryTypeName].aggregates.percentage | number:1"></span>
+                                    </td>
+                                    <td class="text-right">
+                                        <span bo-text="activeItem.aggregates.hierarchyNodes[hierarchyNodeName].products[productName].deliveryTypes[deliveryTypeName].aggregates.adjPercent | number:1"></span>
+                                    </td>
+                                    <td class="text-right">
+                                        <span bo-text="activeItem.aggregates.hierarchyNodes[hierarchyNodeName].products[productName].deliveryTypes[deliveryTypeName].aggregates.variance | number:1"></span>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr ng-repeat-end ng-hide="true"></tr>
+                                <tr ng-repeat-end ng-hide="true"></tr>
+                                <tr ng-repeat-end ng-hide="true"></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div data-ng-show="!showAggregates && !showNodeAggregates">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="col-md-6 bold text-left">
+                            <h6><span class=" clickable text-primary" data-ng-click="showAggregates = true"><i class="fa fa-arrow-circle-o-left"></i>&nbsp;Back to sale summary</span></h6>
+                        </div>
+                        <div class="pull-right" data-extended-custom-pagination="activeItem.paging" data-query="getDetailRows(pageNumber)" data-reinit="activeItem.report"></div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <table bindonce="activeItem.report" class="table table-condensed table-bordered table-striped">
+                            <thead data-show-hide-table-header="tableHeadings" data-default-sort-prop="activeItem.sorting.sortProp" data-sort-fn="sort(propName)" data-report-table="activeItem.filter.detailTable" data-reinit="reinit"></thead>
+                            <tr ng-repeat="sale in activeItem.report" data-repeat-finish-callback="reinitComplete()">
+                                <td class="text-center">
+                                    <span bo-text="sale.saleDate | utcDate"></span>
+                                </td>
+                                <td class="text-center text-primary clickable">
+                                    <span bo-text="sale.accountNumber" data-add-popover-content="sale" data-popover-content-fn="retrieveAccountInfo(item)" data-popover-template="popover.customerPopover" data-callback-fn="openHistoryReport(value)"></span>
+                                </td>
+                                <td class="text-center text-primary clickable">
+                                    <span bo-text="sale.xxxNumber" data-add-popover-content="sale" data-popover-content-fn="retrieveInfo(item)" data-popover-template="popover.xxxPopover" data-callback-fn="openHistoryReport(value)"></span>
+                                </td>
+                                <td class="text-right">
+                                    <span bo-text="sale.xxxSize"></span>
+                                </td>
+                                <td class="text-right">
+                                    <span bo-text="sale.units | number: 1"></span>
+                                </td>
+                                <td class="text-right">
+                                    <span bo-text="sale.ideal | number: 1"></span>
+                                </td>
+                                <td class="text-right">
+                                    <span bo-text="sale.percentage | number:1"></span>
+                                </td>
+                                <td class="text-right">
+                                    <span bo-text="sale.adjPercent | number:1"></span>
+                                </td>
+                                <td class="text-right">
+                                    <span bo-text="sale.variance | number:1"></span>
+                                </td>
+                                <td></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

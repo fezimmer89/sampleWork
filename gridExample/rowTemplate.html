@@ -1,0 +1,27 @@
+<script type="text/ng-template" id="rowTemplate.html">
+    <tr ng-repeat-start="(key, value) in data.nodes track by key" collapse="!activeItem.aggregatesCollapse[parentKeys[data.aggregates.divisionName]].isExpanded" class="bold aggregate-row clickable" data-ng-init="activeItem.aggregatesCollapse[key].isExpanded = activeItem.aggregatesCollapse[key].isExpanded" data-ng-click="aggRowAction(key,  (distanceFromLeaf - level.length), !activeItem.aggregatesCollapse[key].isExpanded)" data-repeat-finish-callback="summaryreinitComplete(key)">
+        <td bindonce ng-repeat="l in level"></td>
+        <td class="clickable" bo-attr bo-attr-colspan="{{distanceFromLeaf - level.length - 2}}">
+            <span>
+                <i class="fa" data-ng-class="{'fa-caret-right' : !activeItem.aggregatesCollapse[key].isExpanded, 'fa-caret-down' : activeItem.aggregatesCollapse[key].isExpanded}" bo-if="data.nodes[key].nodes && (distanceFromLeaf - level.length) > 2"></i>
+                <i class="fa fa-caret-right" bo-if="data.nodes[key].nodes && (distanceFromLeaf - level.length) <= 3"></i>&nbsp;
+            <span bo-text="data.nodes[key].aggregates.hierachyNodeName"></span>
+            </span>
+        </td>
+        <td class="text-right">
+            <span bo-text="data.nodes[key].aggregates.units | number:2"></span>
+        </td>
+        <td class="text-right">
+            <span bo-text="data.nodes[key].aggregates.percentage | number:1"></span>
+        </td>
+        <td class="text-right">
+            <span bo-text="data.nodes[key].aggregates.adjPercent | number:1"></span>
+        </td>
+        <td class="text-right">
+            <span bo-text="data.nodes[key].aggregates.variance | number:1"></span>
+        </td>
+        <td></td>
+    </tr>
+    <tr data-grouping-directive="data.nodes[key]" data-parent-key="key" data-level="level.length + 1" ng-hide="true"></tr>
+    <tr ng-repeat-end ng-hide="true"></tr>
+</script>
