@@ -12,13 +12,13 @@
                 <h4 data-ng-show="!showAggregates && !showNodeAggregates">
                     <strong>{{activeItem.hierarchyNode}}</strong>
                     <span class="thin">{{activeItem.product}}</span>&nbsp;
-                    <strong>{{activeItem.deliveryType}}</strong>
+                    <strong>{{activeItem.saletype}}</strong>
                 </h4>
             </div>
             <div class="col-md-3">
                 <h4 class="text-primary pull-right clickable" data-ng-click="openDatePicker()">
                     <i class="fa fa-calendar"></i> 
-                    <span data-ng-show="activeItem.dates.periodStartDate">{{activeItem.dates.periodStartDate.format("L")}} -</span>{{activeItem.dates.lastDeliveryDate.format("L")}}
+                    <span data-ng-show="activeItem.dates.periodStartDate">{{activeItem.dates.periodStartDate.format("L")}} -</span>{{activeItem.dates.lastSaleDate.format("L")}}
                 </h4>
             </div>
         </div>
@@ -39,7 +39,7 @@
                         <div class="col-sm-4">
                             <label class="control-label">HierarchyNode</label>
                             <select class="form-control" data-ng-model="activeItem.filter.hierarchyNodeId" data-ng-options="node.id as node.name for node in $root.user.hierarchy.hierarchyNode.nodes" data-ng-change="updateHierarchyNode()"></select>
-                            <small><a class="clickable" data-ng-click="openDeliveryHierarchyView()">Click here to view the hierarchy</a>
+                            <small><a class="clickable" data-ng-click="openHierarchyView()">Click here to view the hierarchy</a>
                             </small>
                         </div>
                     </div>
@@ -187,23 +187,23 @@
                                     </td>
                                     <td></td>
                                 </tr>
-                                <tr ng-repeat-start="(deliveryTypeName, deliveryTypeGroup) in productGroup.deliveryTypes track by deliveryTypeName" collapse="!activeItem.groupCollapse[hierarchyNodeName].isExpanded || !activeItem.groupCollapse[hierarchyNodeName+'_'+productName].isExpanded" class="bold aggregate-row clickable" data-ng-click="getDetailRows(1, hierarchyNodeName, productName, deliveryTypeName)" data-repeat-finish-callback="dtComplete()">
+                                <tr ng-repeat-start="(saleTypeName, group) in productGroup.saleTypes track by saleTypeName" collapse="!activeItem.groupCollapse[hierarchyNodeName].isExpanded || !activeItem.groupCollapse[hierarchyNodeName+'_'+productName].isExpanded" class="bold aggregate-row clickable" data-ng-click="getDetailRows(1, hierarchyNodeName, productName, saleTypeName)" data-repeat-finish-callback="dtComplete()">
                                     <td></td>
                                     <td></td>
                                     <td>
-                                        <span bo-text="deliveryTypeName"></span>
+                                        <span bo-text="saleTypeName"></span>
                                     </td>
                                     <td class="text-right">
-                                        <span bo-text="activeItem.aggregates.hierarchyNodes[hierarchyNodeName].products[productName].deliveryTypes[deliveryTypeName].aggregates.units | number:2"></span>
+                                        <span bo-text="activeItem.aggregates.hierarchyNodes[hierarchyNodeName].products[productName].saleTypes[saleTypeName].aggregates.units | number:2"></span>
                                     </td>
                                     <td class="text-right">
-                                        <span bo-text="activeItem.aggregates.hierarchyNodes[hierarchyNodeName].products[productName].deliveryTypes[deliveryTypeName].aggregates.percentage | number:1"></span>
+                                        <span bo-text="activeItem.aggregates.hierarchyNodes[hierarchyNodeName].products[productName].saleTypes[saleTypeName].aggregates.percentage | number:1"></span>
                                     </td>
                                     <td class="text-right">
-                                        <span bo-text="activeItem.aggregates.hierarchyNodes[hierarchyNodeName].products[productName].deliveryTypes[deliveryTypeName].aggregates.adjPercent | number:1"></span>
+                                        <span bo-text="activeItem.aggregates.hierarchyNodes[hierarchyNodeName].products[productName].saleTypes[saleTypeName].aggregates.adjPercent | number:1"></span>
                                     </td>
                                     <td class="text-right">
-                                        <span bo-text="activeItem.aggregates.hierarchyNodes[hierarchyNodeName].products[productName].deliveryTypes[deliveryTypeName].aggregates.variance | number:1"></span>
+                                        <span bo-text="activeItem.aggregates.hierarchyNodes[hierarchyNodeName].products[productName].saleTypes[saleTypeName].aggregates.variance | number:1"></span>
                                     </td>
                                     <td></td>
                                 </tr>
